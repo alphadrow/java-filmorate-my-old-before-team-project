@@ -1,85 +1,85 @@
 package ru.yandex.practicum.filmorate.controller;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.LikeNotFoundException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-
+import ru.yandex.practicum.filmorate.service.UserService;
 import javax.validation.Valid;
-import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    public UserService userService;
 
-    public boolean validate(User user){
-        if (user.getEmail() == null){
-            log.debug("user.getEmail(): {}", user.getEmail());
-            return false;
-        }
-        if (!user.getEmail().contains("@")) {
-            log.debug("!user.getEmail().contains(\"@\"): {}", !user.getEmail().contains("@"));
-            return false;
-        }
-        if (user.getEmail().isBlank()) {
-            log.debug("user.getEmail().isBlank(): {}", user.getEmail().isBlank());
-            return false;
-        }
-        if (user.getLogin() == null) {
-            log.debug("user.getLogin() == null");
-            return false;
-        }
-        if (user.getLogin().isBlank()) {
-            log.debug("user.getLogin().isBlank(): {}", user.getLogin().isBlank());
-            return false;
-        }
-        if (user.getLogin().contains(" ")) {
-            log.debug("user.getLogin().contains(\" \"): {}", user.getLogin().contains(" "));
-            return false;
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.debug("user birthday is after today");
-            return false;
-        }
-        if (user.getName() == null || user.getName().isEmpty() || user.getName().isBlank()) {
-            log.debug("setName trigger");
-            user.setName(user.getLogin());
-        }
-    return true;
+    @Autowired
+    public UserController(UserService userService){
+        this.userService = userService;
     }
-    private final Set<User> users = new HashSet<>();
 
-    @GetMapping
+
+    @GetMapping()
+    @ResponseBody
     public Set<User> findAll() {
-        return users;
+        return userService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    @ResponseBody
+    public User getUserById(@PathVariable long id){
+        return userService.getUserById(id);
+    }
+
+    @GetMapping("/{id}/friends")
+    @ResponseBody
+    public Set<User> getFriends(@PathVariable long id){
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    @ResponseBody
+    public Set<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId){
+        return userService.getCommonFriends(id, otherId);
     }
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        log.debug("Получен запрос на добавление пользователя: {}",
-                user);
-        if (validate(user)) {
-            log.debug("user: {}", user);
-            users.add(user);
+            userService.create(user);
             return user;
-        } else {
-            log.warn("Валидация пользователя не пройдена!");
-            throw new ValidationException("Неверные параметры пользователя!");
-        }
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    @ResponseBody
+    public void addToFriends(@PathVariable long id, @PathVariable long friendId){
+        userService.addToFriends(id, friendId);
     }
 
     @PutMapping
-    public void renew(@RequestBody User user){
-
-        if (users.stream().anyMatch(t -> t.equals(user))) {
-            users.remove(user);
-        }
-//        create(user);
-        users.add(user);
+    @ResponseBody
+    public User renew(@RequestBody User user){
+        return userService.renew(user);
     }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeFromFriends(@PathVariable long id, @PathVariable long friendId){
+        userService.removeFromFriends(id, friendId);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Map<String, String>> HandleUserNotFoundException(final UserNotFoundException e ) {
+        return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
+    }
+
+
+
 }
 
