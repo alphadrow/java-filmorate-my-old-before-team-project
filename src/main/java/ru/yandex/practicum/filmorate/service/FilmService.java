@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exception.LikeNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -23,18 +25,25 @@ public class FilmService {
     }
 
     public void like(long filmId, long userId){
-        if (filmStorage.getById(filmId).isPresent()){
-            Film film = filmStorage.getById(filmId).get();
-            film.like(userId);
-            filmStorage.renew(film);
+        filmStorage.getById(filmId).ifPresentOrElse(film -> {
+                    film.like(userId);
+            try {
+                filmStorage.renew(film);
+            } catch (FilmNotFoundException e) {
+                throw new RuntimeException(e);
+            }
             log.debug(film.getLikes().toString());
-            log.debug(filmStorage.getById(filmId).get().getLikes().toString());
-        } else {
-            throw new FilmNotFoundException("Фильма с ID " + filmId + " нет в базе");
-        }
+                    log.debug(filmStorage.getById(filmId).get().getLikes().toString());
+                    },() -> {
+            try {
+                throw new FilmNotFoundException("Фильма с ID " + filmId + " нет в базе");
+            } catch (FilmNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    public void dislike(long filmId, long userId){
+    public void dislike(long filmId, long userId) throws LikeNotFoundException, FilmNotFoundException {
         Optional<Film> film = filmStorage.getById(filmId);
         if (film.isPresent()) {
             Film sub = film.get();
@@ -60,7 +69,7 @@ public class FilmService {
         log.debug("firstFilmDate={}",firstFilmDate);
         log.debug("film.getReleaseDate()={}", film.getReleaseDate());
         log.debug("film.getDescription().length(): {}", film.getDescription().length());
-        if (film.getName() == null)  {
+        if (!StringUtils.hasText(film.getName()))  {
             log.debug("film.getName().isEmpty(): {}", film.getName());
             return false;
         }
@@ -93,7 +102,7 @@ public class FilmService {
         return filmStorage.findAll();
     }
 
-    public Film getById(int id){
+    public Film getById(int id) throws FilmNotFoundException {
 
         if (filmStorage.getById(id).isPresent()) {
             return filmStorage.getById(id).get();
@@ -116,7 +125,7 @@ public class FilmService {
         }
     }
 
-    public Film renew(Film film){
+    public Film renew(Film film) throws FilmNotFoundException {
         return filmStorage.renew(film);
     }
 

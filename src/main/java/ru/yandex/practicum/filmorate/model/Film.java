@@ -30,7 +30,7 @@ public class Film {
         likes.add(id);
     }
 
-    public void dislike(Long id){
+    public void dislike(Long id) throws LikeNotFoundException {
         if (likes == null){
             likes = new HashSet<>();
         }

@@ -32,19 +32,19 @@ public class UserController {
 
     @GetMapping("/{id}")
     @ResponseBody
-    public User getUserById(@PathVariable long id){
+    public User getUserById(@PathVariable long id) throws UserNotFoundException {
         return userService.getUserById(id);
     }
 
     @GetMapping("/{id}/friends")
     @ResponseBody
-    public Set<User> getFriends(@PathVariable long id){
+    public Set<User> getFriends(@PathVariable long id) throws UserNotFoundException {
         return userService.getFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
     @ResponseBody
-    public Set<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId){
+    public Set<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId) throws UserNotFoundException {
         return userService.getCommonFriends(id, otherId);
     }
 
@@ -56,18 +56,18 @@ public class UserController {
 
     @PutMapping("/{id}/friends/{friendId}")
     @ResponseBody
-    public void addToFriends(@PathVariable long id, @PathVariable long friendId){
+    public void addToFriends(@PathVariable long id, @PathVariable long friendId) throws UserNotFoundException {
         userService.addToFriends(id, friendId);
     }
 
     @PutMapping
     @ResponseBody
-    public User renew(@RequestBody User user){
+    public User renew(@RequestBody User user) throws UserNotFoundException {
         return userService.renew(user);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public void removeFromFriends(@PathVariable long id, @PathVariable long friendId){
+    public void removeFromFriends(@PathVariable long id, @PathVariable long friendId) throws UserNotFoundException {
         userService.removeFromFriends(id, friendId);
     }
 

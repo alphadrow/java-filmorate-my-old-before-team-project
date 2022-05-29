@@ -58,21 +58,21 @@ public class UserService {
         return true;
     }
 
-    public void addToFriends(long firstId, long otherId){
+    public void addToFriends(long firstId, long otherId) throws UserNotFoundException {
         User user1 = getUserById(firstId);
         User user2 = getUserById(otherId);
         user1.addToFriends(otherId);
         user2.addToFriends(firstId);
     }
 
-    public void removeFromFriends(long firstId, long otherId){
+    public void removeFromFriends(long firstId, long otherId) throws UserNotFoundException {
         User user1 = getUserById(firstId);
         User user2 = getUserById(otherId);
         user1.removeFromFriends(otherId);
         user2.removeFromFriends(firstId);
     }
 
-    public Set<User> getFriends(long id){
+    public Set<User> getFriends(long id) throws UserNotFoundException {
         Set<User> result = new HashSet<>();
         for (Long friendId : getUserById(id).getFriends()) {
             result.add(getUserById(friendId));
@@ -80,7 +80,7 @@ public class UserService {
         return result;
     }
 
-    public Set<User> getCommonFriends(long firstId, long otherId){
+    public Set<User> getCommonFriends(long firstId, long otherId) throws UserNotFoundException {
         User user1 = getUserById(firstId);
         User user2 = getUserById(otherId);
         Set<User> result = new HashSet<>();
@@ -102,7 +102,7 @@ public class UserService {
         return userStorage.findAll();
     }
 
-    public User getUserById(long id){
+    public User getUserById(long id) throws UserNotFoundException {
         if (userStorage.getById(id).isPresent()){
             return userStorage.getById(id).get();
         } else {
@@ -110,7 +110,7 @@ public class UserService {
         }
     }
 
-    public User renew(User user){
+    public User renew(User user) throws UserNotFoundException {
         return userStorage.renew(user);
     }
 

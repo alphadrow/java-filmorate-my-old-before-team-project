@@ -26,8 +26,8 @@ public class FilmController {
 
     @GetMapping("/{id}")
     @ResponseBody
-    public Film getFilmById(@PathVariable int id){
-        return filmService.getById(id);
+    public Film getFilmById(@PathVariable int id) throws FilmNotFoundException {
+            return filmService.getById(id);
     }
 
 
@@ -61,12 +61,12 @@ public class FilmController {
 
     @PutMapping
     @ResponseBody
-    public Film renew(@RequestBody Film film){
+    public Film renew(@RequestBody Film film) throws FilmNotFoundException {
         return (filmService.renew(film));
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void dislike(@PathVariable long id, @PathVariable long userId){
+    public void dislike(@PathVariable long id, @PathVariable long userId) throws FilmNotFoundException, LikeNotFoundException {
         filmService.dislike(id, userId);
     }
 

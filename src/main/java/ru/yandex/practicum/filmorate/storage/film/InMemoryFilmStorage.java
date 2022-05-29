@@ -26,7 +26,7 @@ public class InMemoryFilmStorage implements  FilmStorage{
     }
 
     @Override
-    public Film renew(Film film) {
+    public Film renew(Film film) throws FilmNotFoundException {
         removeById(film.getId());
         films.add(film);
         return film;
@@ -37,11 +37,11 @@ public class InMemoryFilmStorage implements  FilmStorage{
         return films.stream().filter(film -> film.getId() == id).findAny();
     }
 
-    protected void removeById(long id){
+    protected void removeById(long id) throws FilmNotFoundException {
         try {
             films.remove(films.stream().filter(film -> film.getId() == id).findAny().get());
         } catch (NoSuchElementException e) {
-            throw  new FilmNotFoundException("Фильма с id " + id + "нет в базе.");
+            throw new FilmNotFoundException("Фильма с id " + id + "нет в базе.");
         }
     }
 }

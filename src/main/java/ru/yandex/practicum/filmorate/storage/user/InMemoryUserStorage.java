@@ -24,7 +24,7 @@ public class InMemoryUserStorage implements UserStorage{
     }
 
     @Override
-    public User renew(User user) {
+    public User renew(User user) throws UserNotFoundException {
         removeById(user.getId());
         users.add(user);
         return user;
@@ -35,7 +35,7 @@ public class InMemoryUserStorage implements UserStorage{
         return users.stream().filter(user -> user.getId() == id).findAny();
     }
 
-    protected void removeById(long id){
+    protected void removeById(long id) throws UserNotFoundException {
         try {
             users.remove(users.stream().filter(user -> user.getId() == id).findAny().get());
         } catch (NoSuchElementException e) {
