@@ -2,7 +2,13 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.FilmController;
+import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
@@ -11,7 +17,7 @@ public class FilmControllerTest {
     public static void main(String[] args) {
 
     }
-    FilmController filmController = new FilmController();
+    FilmController filmController = new FilmController(new FilmService(new InMemoryFilmStorage()));
     Film film;
 
     @BeforeEach
@@ -29,16 +35,16 @@ public class FilmControllerTest {
     public void ShouldTrue() {
 
         System.out.println("film = " + film);
-    assertTrue(filmController.validate(film));
+    assertTrue(filmController.filmService.validate(film));
     }
 
     @Test
     public void ShouldFalseIfNameIsBlankOrNull() {
 
         film.setName("");
-        assertFalse(filmController.validate(film));
+        assertFalse(filmController.filmService.validate(film));
         film.setName(null);
-        assertFalse(filmController.validate(film));
+        assertFalse(filmController.filmService.validate(film));
     }
 
     @Test
@@ -47,37 +53,37 @@ public class FilmControllerTest {
         sb.append("a".repeat(199));
         String result = sb.toString();
         film.setDescription(result);
-        assertTrue(filmController.validate(film));
+        assertTrue(filmController.filmService.validate(film));
         film.setDescription(result += " ");
-        assertTrue(filmController.validate(film));
+        assertTrue(filmController.filmService.validate(film));
         film.setDescription(result += " ");
-        assertFalse(filmController.validate(film));
+        assertFalse(filmController.filmService.validate(film));
     }
 
     @Test
     public void ShouldFalseIfReleaseDateIsOlderThan18951228(){
 
         film.setReleaseDate(LocalDate.of(1895,12,27));
-        assertFalse(filmController.validate(film));
+        assertFalse(filmController.filmService.validate(film));
         film.setReleaseDate(LocalDate.of(1895, 12, 28));
-        assertTrue(filmController.validate(film));
+        assertTrue(filmController.filmService.validate(film));
         film.setReleaseDate(LocalDate.of(1895, 12, 29));
-        assertTrue(filmController.validate(film));
+        assertTrue(filmController.filmService.validate(film));
         film.setReleaseDate(LocalDate.MAX);
-        assertTrue(filmController.validate(film));
+        assertTrue(filmController.filmService.validate(film));
         film.setReleaseDate(LocalDate.MIN);
-        assertFalse(filmController.validate(film));
+        assertFalse(filmController.filmService.validate(film));
     }
 
     @Test
     public void ShouldFalseIfDurationLessOrEqualsZero(){
 
         film.setDuration(0);
-        assertFalse(filmController.validate(film));
+        assertFalse(filmController.filmService.validate(film));
         film.setDuration(1);
-        assertTrue(filmController.validate(film));
+        assertTrue(filmController.filmService.validate(film));
         film.setDuration(-1);
-        assertFalse(filmController.validate(film));
+        assertFalse(filmController.filmService.validate(film));
     }
 
 }

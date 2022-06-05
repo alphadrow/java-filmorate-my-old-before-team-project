@@ -1,12 +1,15 @@
 package ru.yandex.practicum.filmorate.controller;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exception.LikeNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-
+import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.Valid;
-import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -14,67 +17,72 @@ import java.util.Set;
 @RequestMapping("/films")
 public class FilmController {
 
-    private final Set<Film> films = new HashSet<>();
+    public FilmService filmService;
 
-    public boolean validate(Film film){
-        LocalDate firstFilmDate = LocalDate.of(1895, 12, 28);
-        log.debug("firstFilmDate={}",firstFilmDate);
-        log.debug("film.getReleaseDate()={}", film.getReleaseDate());
-        log.debug("film.getDescription().length(): {}", film.getDescription().length());
-        if (film.getName() == null)  {
-            log.debug("film.getName().isEmpty(): {}", film.getName());
-            return false;
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
+
+    @GetMapping("/{id}")
+    @ResponseBody
+    public Film getFilmById(@PathVariable int id) throws FilmNotFoundException {
+            return filmService.getById(id);
+    }
+
+
+    @GetMapping("/popular")
+    @ResponseBody
+    public Set<Film> getTopRatedFilms(@RequestParam(required = false) String count){
+        if (count == null) {
+            return filmService.getTopByLikes(10);
         }
-        if (film.getName().isBlank())  {
-            log.debug("film.getName(): {}", film.getName());
-            return false;
-        }
-        if ((film.getDescription().length() > 200) || (film.getDescription().isBlank())) {
-            log.debug("film.getDescription().length(): {}", film.getDescription().length());
-            return false;
-        }
-        if (film.getDuration() < 0) {
-            log.debug("film.getDuration().isNegative(): {}", film.getDuration() < 0);
-            return false;
-        }
-        if (film.getDuration() == 0) {
-            log.debug("film.getDuration().isZero(): {}", film.getDuration() == 0);
-        return false;
-        }
-        if (film.getReleaseDate().isBefore(firstFilmDate)) {
-            log.debug("film.getReleaseDate().isBefore(firstFilmDate): {}",
-                    film.getReleaseDate().isBefore(firstFilmDate));
-            return false;
-        }
-        return true;
+        return filmService.getTopByLikes(Integer.parseInt(count));
     }
 
     @GetMapping
+    @ResponseBody
     public Set<Film> findAll() {
-        return films;
+        return filmService.findAll();
     }
+
+
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        log.debug("Получен запрос на добавление фильма: {}",
-                film);
-        if (validate(film)) {
-            films.add(film);
-            log.debug("film {} was added", film);
+            filmService.create(film);
             return film;
-        } else {
-            log.warn("Валидация фильма не пройдена!");
-            throw new ValidationException("Неверные параметры фильма!");
-        }
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public void like(@PathVariable int id, @PathVariable long userId){
+        filmService.like(id, userId);
     }
 
     @PutMapping
-    public void renew(@RequestBody Film film){
+    @ResponseBody
+    public Film renew(@RequestBody Film film) throws FilmNotFoundException {
+        return (filmService.renew(film));
+    }
 
-        if (films.stream().anyMatch(t -> t.getName().equals(film.getName()))) {
-            films.remove(film);
-        }
-//        create(film);
-        films.add(film);
+    @DeleteMapping("/{id}/like/{userId}")
+    public void dislike(@PathVariable long id, @PathVariable long userId) throws FilmNotFoundException, LikeNotFoundException {
+        filmService.dislike(id, userId);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Map<String, String>> HandleFilmNotFoundException(final FilmNotFoundException e) {
+        return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Map<String, String>> HandleLikeNotFoundException(final LikeNotFoundException e ) {
+        return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
     }
 }
