@@ -1,2 +1,3 @@
 # java-filmorate
-Template repository for Filmorate project.
+
+![https://disk.yandex.ru/i/eC3z47puyI3pGQ]
