@@ -1,3 +1,3 @@
 # java-filmorate
 
-![test](https://disk.yandex.ru/i/eC3z47puyI3pGQ)
+![test](https://drive.google.com/file/d/1YnriYXR6vDIZxPTJ0VB8o_pIt6a9RF0N/view?usp=sharing)
