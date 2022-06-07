@@ -6,7 +6,7 @@
 --Examples of SQL requests:
 
 --READ
-
+```SQL
 --("/films/{id}")
 SELECT *
 FROM "films"
@@ -43,3 +43,4 @@ INNER JOIN "users" u1 ON fr."friend_id"=u1."user_id"
 INNER JOIN "users" u2 ON fr."friend_id"=u2."user_id"
 WHERE u1."user_id" = id
 AND u2."user_id" = otherId) friends ON us."user_id"=friends."user_id";
+```
