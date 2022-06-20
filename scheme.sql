@@ -24,11 +24,13 @@ CREATE TABLE "users" (
 );
 
 CREATE TABLE "friends" (
+  "id" int4 PRIMARY KEY,
   "user_id" int4,
   "friend_id" int4
 );
 
 CREATE TABLE "likes" (
+  "id" int4 PRIMARY KEY,
   "user_id" int4,
   "film_id" int4
 );
@@ -45,6 +47,7 @@ CREATE TABLE "films" (
 );
 
 CREATE TABLE "genres" (
+  "id" int4 PRIMARY KEY,
   "film_id" int4,
   "genre" genre
 );
