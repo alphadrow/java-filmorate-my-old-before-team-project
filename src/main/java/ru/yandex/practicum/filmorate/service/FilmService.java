@@ -2,66 +2,52 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exception.LikeNotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.dao.FilmDao;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.model.Genres;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
-import javax.management.StringValueExp;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class FilmService {
 
-    FilmStorage filmStorage;
-    long id;
+    FilmDao filmDao;
 
-    public FilmService(FilmStorage filmStorage) {
-        this.filmStorage = filmStorage;
+    public FilmService(FilmDao filmDao) {
+        this.filmDao = filmDao;
     }
 
-    public void like(long filmId, long userId){
-        filmStorage.getById(filmId).ifPresentOrElse(film -> {
-                    film.like(userId);
-            try {
-                filmStorage.renew(film);
-            } catch (FilmNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            log.debug(film.getLikes().toString());
-                    log.debug(filmStorage.getById(filmId).get().getLikes().toString());
-                    },() -> {
+
+    public void like(int filmId, int userId) throws FilmNotFoundException, UserNotFoundException {
+        if (filmDao.getById(filmId) != null) {
+            filmDao.like(filmId, userId);
+        } else {
             try {
                 throw new FilmNotFoundException("Фильма с ID " + filmId + " нет в базе");
             } catch (FilmNotFoundException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }
     }
 
-    public void dislike(long filmId, long userId) throws LikeNotFoundException, FilmNotFoundException {
-        Optional<Film> film = filmStorage.getById(filmId);
-        if (film.isPresent()) {
-            Film sub = film.get();
-            sub.dislike(userId);
-            filmStorage.renew(sub);
+    public void dislike(int filmId, int userId) throws FilmNotFoundException, UserNotFoundException {
+        if (filmDao.getById(filmId) != null) {
+            filmDao.dislike(filmId, userId);
         } else {
-            throw new FilmNotFoundException("Фильма с ID " + filmId + " нет в базе");
+            try {
+                throw new FilmNotFoundException("Фильма с ID " + filmId + " нет в базе");
+            } catch (FilmNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     public Set<Film> getTopByLikes(int size){
-        log.debug("size: " + size);
-        log.debug("filmstorage size: " + filmStorage.findAll().size());
-        return filmStorage.findAll()
-                .stream()
-                .sorted(filmByLikesComparator)
-                .limit(size)
-                .collect(Collectors.toSet());
+            return filmDao.getPopular(size);
         }
 
     public boolean validate(Film film){
@@ -99,26 +85,22 @@ public class FilmService {
 
 
     public Set<Film> findAll() {
-        return filmStorage.findAll();
+        return filmDao.get();
     }
 
     public Film getById(int id) throws FilmNotFoundException {
-
-        if (filmStorage.getById(id).isPresent()) {
-            return filmStorage.getById(id).get();
-        } else {
+        Film film = filmDao.getById(id);
+        if (film == null) {
             throw new FilmNotFoundException("Фильма с айди" + id + "нет в базе.");
         }
+        return film;
     }
 
     public Film create(Film film) {
         log.debug("Получен запрос на добавление фильма: {}",
                 film);
         if (validate(film)) {
-            film.setId(++id);
-            filmStorage.create(film);
-            log.debug("film {} was added", film);
-            return film;
+            return filmDao.create(film);
         } else {
             log.warn("Валидация фильма не пройдена!");
             throw new ValidationException("Неверные параметры фильма!");
@@ -126,20 +108,32 @@ public class FilmService {
     }
 
     public Film renew(Film film) throws FilmNotFoundException {
-        return filmStorage.renew(film);
+        log.debug("renew case, film.toString() {}", film.toString());
+        checkForFilmExist(film.getId());
+        return filmDao.update(film);
     }
 
-    public Comparator<Film> filmByLikesComparator = new Comparator<Film>() {
-        @Override
-        public int compare(Film o1, Film o2) {
-            if (o1.likes == null) {
-                if (o2.likes == null){
-                    return 0;
-                } else return 1;
-            } else if (o2.likes == null) {
-                return -1;
-            }
-            return o1.likes.size() - o2.likes.size();
+
+    private void checkForFilmExist(int id) throws FilmNotFoundException {
+        if (filmDao.isEmpty(id)) {
+            throw new FilmNotFoundException("Фильма с ID " + id + " нет в базе.");
         }
-    };
+    }
+
+    public List<Mpa> getAllMpa() {
+        return filmDao.getAllMpa();
+    }
+
+    public Mpa getMpaById(int id) throws MpaNotFoundException {
+        return filmDao.getMpaById(id);
+    }
+
+    public List<Genres> getAllGenres() {
+        return filmDao.getAllGenres();
+    }
+
+    public Genres getGenreById(int id) throws GenreNotFoundException {
+        log.debug("Получен запрос на получение жанра по id {}", id);
+        return filmDao.getGenreById(id);
+    }
 }
