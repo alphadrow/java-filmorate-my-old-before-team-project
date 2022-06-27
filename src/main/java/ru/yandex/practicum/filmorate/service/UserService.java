@@ -1,25 +1,20 @@
 package ru.yandex.practicum.filmorate.service;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.UserDao;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
-
 @Service
 public class UserService {
+    UserDao userDao;
 
-    UserStorage userStorage;
-    long id;
-
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
+    public UserService(UserDao userDao) {
+        this.userDao = userDao ;
     }
 
     public boolean validate(User user){
@@ -58,73 +53,53 @@ public class UserService {
         return true;
     }
 
-    public void addToFriends(long firstId, long otherId) throws UserNotFoundException {
-        User user1 = getUserById(firstId);
-        User user2 = getUserById(otherId);
-        user1.addToFriends(otherId);
-        user2.addToFriends(firstId);
+    public void addToFriends(int firstId, int otherId) throws UserNotFoundException {
+        checkForExist(firstId);
+        checkForExist(otherId);
+        userDao.addToFriends(firstId, otherId);
     }
 
-    public void removeFromFriends(long firstId, long otherId) throws UserNotFoundException {
-        User user1 = getUserById(firstId);
-        User user2 = getUserById(otherId);
-        user1.removeFromFriends(otherId);
-        user2.removeFromFriends(firstId);
+    public void removeFromFriends(int firstId, int otherId) {
+        userDao.removeFromFriends(firstId, otherId);
     }
 
-    public Set<User> getFriends(long id) throws UserNotFoundException {
-        Set<User> result = new HashSet<>();
-        for (Long friendId : getUserById(id).getFriends()) {
-            result.add(getUserById(friendId));
-        }
-        return result;
+    public Set<User> getFriends(int id) {
+        return userDao.getFriends(id);
     }
 
-    public Set<User> getCommonFriends(long firstId, long otherId) throws UserNotFoundException {
-        User user1 = getUserById(firstId);
-        User user2 = getUserById(otherId);
-        Set<User> result = new HashSet<>();
-        try {
-            for (long id1 : user1.getFriends()) {
-                for (long id2 : user2.getFriends()) {
-                    if (id1 == id2) {
-                        result.add(getUserById(id1));
-                    }
-                }
-            }
-        } catch (NullPointerException e) {
-                return result;
-        }
-        return result;
+    public Set<User> getCommonFriends(int firstId, int otherId) {
+        return userDao.getCommonFriends(firstId, otherId);
     }
 
     public Set<User> findAll() {
-        return userStorage.findAll();
+        return userDao.getAllUsers();
     }
 
-    public User getUserById(long id) throws UserNotFoundException {
-        if (userStorage.getById(id).isPresent()){
-            return userStorage.getById(id).get();
-        } else {
-            throw new UserNotFoundException("Пользователя с ID " + id + " нет в базе.");
-        }
+    public User getUserById(int id) throws UserNotFoundException {
+        return userDao.getUserById(id).orElseThrow(() ->
+                new UserNotFoundException("Пользователя с ID " + id + " нет в базе."));
     }
 
     public User renew(User user) throws UserNotFoundException {
-        return userStorage.renew(user);
+            checkForExist(user.getId());
+            return userDao.updateUser(user);
+
     }
 
     public User create(User user) {
         log.debug("Получен запрос на добавление пользователя: {}",
                 user);
         if (validate(user)) {
-            log.debug("user: {}", user);
-            user.setId(++id);
-            userStorage.create(user);
-            return user;
+            return userDao.createUser(user);
         } else {
             log.warn("Валидация пользователя не пройдена!");
             throw new ValidationException("Неверные параметры пользователя!");
+        }
+    }
+
+    private void checkForExist(int id) throws UserNotFoundException {
+        if (userDao.getUserById(id).isEmpty()) {
+            throw new UserNotFoundException("Пользователя с ID " + id + " нет в базе.");
         }
     }
 

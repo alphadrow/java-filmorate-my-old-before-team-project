@@ -4,17 +4,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exception.LikeNotFoundException;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genres;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @Slf4j
 @RestController
-@RequestMapping("/films")
+//@RequestMapping("/films")
 public class FilmController {
 
     public FilmService filmService;
@@ -24,14 +26,14 @@ public class FilmController {
         this.filmService = filmService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/films/{id}")
     @ResponseBody
     public Film getFilmById(@PathVariable int id) throws FilmNotFoundException {
             return filmService.getById(id);
     }
 
 
-    @GetMapping("/popular")
+    @GetMapping("/films/popular")
     @ResponseBody
     public Set<Film> getTopRatedFilms(@RequestParam(required = false) String count){
         if (count == null) {
@@ -40,7 +42,7 @@ public class FilmController {
         return filmService.getTopByLikes(Integer.parseInt(count));
     }
 
-    @GetMapping
+    @GetMapping("/films")
     @ResponseBody
     public Set<Film> findAll() {
         return filmService.findAll();
@@ -48,26 +50,52 @@ public class FilmController {
 
 
 
-    @PostMapping
+    @PostMapping("/films")
     public Film create(@Valid @RequestBody Film film) {
-            filmService.create(film);
-            return film;
+            return filmService.create(film);
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public void like(@PathVariable int id, @PathVariable long userId){
+    @PutMapping("/films/{id}/like/{userId}")
+    public void like(@PathVariable int id, @PathVariable int userId) throws FilmNotFoundException, UserNotFoundException {
         filmService.like(id, userId);
     }
 
-    @PutMapping
+    @PutMapping("/films")
     @ResponseBody
     public Film renew(@RequestBody Film film) throws FilmNotFoundException {
+        log.debug("/film case, film.toString() {}", film.toString());
         return (filmService.renew(film));
     }
 
-    @DeleteMapping("/{id}/like/{userId}")
-    public void dislike(@PathVariable long id, @PathVariable long userId) throws FilmNotFoundException, LikeNotFoundException {
+
+    @DeleteMapping("/films/{id}/like/{userId}")
+    public void dislike(@PathVariable int id, @PathVariable int userId) throws FilmNotFoundException, LikeNotFoundException, UserNotFoundException {
         filmService.dislike(id, userId);
+    }
+
+    @GetMapping("/mpa")
+    @ResponseBody
+    public List<Mpa> getAllMpa(){
+        return filmService.getAllMpa();
+    }
+
+    @GetMapping("/mpa/{id}")
+    @ResponseBody
+    public Mpa getMpaById(@PathVariable int id) throws MpaNotFoundException {
+        return filmService.getMpaById(id);
+    }
+
+    @GetMapping("/genres")
+    @ResponseBody
+    public List<Genres> getAllGenres(){
+        return filmService.getAllGenres();
+    }
+
+    @GetMapping("/genres/{id}")
+    @ResponseBody
+    public Genres getGenreById(@PathVariable int id) throws GenreNotFoundException {
+        log.debug("getGenreById top");
+        return filmService.getGenreById(id);
     }
 
     @ExceptionHandler
@@ -80,6 +108,22 @@ public class FilmController {
 
     @ExceptionHandler
     public ResponseEntity<Map<String, String>> HandleLikeNotFoundException(final LikeNotFoundException e ) {
+        return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Map<String, String>> HandleMpaNotFoundException(final MpaNotFoundException e ) {
+        return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Map<String, String>> HandleGenreNotFoundException(final GenreNotFoundException e ) {
         return new ResponseEntity<>(
                 Map.of("error", e.getMessage()),
                 HttpStatus.NOT_FOUND

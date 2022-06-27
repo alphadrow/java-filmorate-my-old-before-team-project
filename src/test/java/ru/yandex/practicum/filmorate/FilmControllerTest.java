@@ -1,14 +1,11 @@
 package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.impl.FilmDaoImpl;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
@@ -17,7 +14,7 @@ public class FilmControllerTest {
     public static void main(String[] args) {
 
     }
-    FilmController filmController = new FilmController(new FilmService(new InMemoryFilmStorage()));
+    FilmController filmController = new FilmController(new FilmService(new FilmDaoImpl(new JdbcTemplate())));
     Film film;
 
     @BeforeEach
