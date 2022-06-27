@@ -16,7 +16,6 @@ import java.util.Set;
 
 @Slf4j
 @RestController
-//@RequestMapping("/films")
 public class FilmController {
 
     public FilmService filmService;

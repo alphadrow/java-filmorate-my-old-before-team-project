@@ -23,7 +23,7 @@ public class FilmService {
 
 
     public void like(int filmId, int userId) throws FilmNotFoundException, UserNotFoundException {
-        if (filmDao.getFilmById(filmId) != null) {
+        if (filmDao.getById(filmId) != null) {
             filmDao.like(filmId, userId);
         } else {
             try {
@@ -35,7 +35,7 @@ public class FilmService {
     }
 
     public void dislike(int filmId, int userId) throws FilmNotFoundException, UserNotFoundException {
-        if (filmDao.getFilmById(filmId) != null) {
+        if (filmDao.getById(filmId) != null) {
             filmDao.dislike(filmId, userId);
         } else {
             try {
@@ -47,7 +47,7 @@ public class FilmService {
     }
 
     public Set<Film> getTopByLikes(int size){
-            return filmDao.getPopularFilms(size);
+            return filmDao.getPopular(size);
         }
 
     public boolean validate(Film film){
@@ -85,11 +85,11 @@ public class FilmService {
 
 
     public Set<Film> findAll() {
-        return filmDao.getFilms();
+        return filmDao.get();
     }
 
     public Film getById(int id) throws FilmNotFoundException {
-        Film film = filmDao.getFilmById(id);
+        Film film = filmDao.getById(id);
         if (film == null) {
             throw new FilmNotFoundException("Фильма с айди" + id + "нет в базе.");
         }
@@ -100,7 +100,7 @@ public class FilmService {
         log.debug("Получен запрос на добавление фильма: {}",
                 film);
         if (validate(film)) {
-            return filmDao.createFilm(film);
+            return filmDao.create(film);
         } else {
             log.warn("Валидация фильма не пройдена!");
             throw new ValidationException("Неверные параметры фильма!");
@@ -110,12 +110,12 @@ public class FilmService {
     public Film renew(Film film) throws FilmNotFoundException {
         log.debug("renew case, film.toString() {}", film.toString());
         checkForFilmExist(film.getId());
-        return filmDao.updateFilm(film);
+        return filmDao.update(film);
     }
 
 
     private void checkForFilmExist(int id) throws FilmNotFoundException {
-        if (filmDao.checkForFilmExist(id)) {
+        if (filmDao.isEmpty(id)) {
             throw new FilmNotFoundException("Фильма с ID " + id + " нет в базе.");
         }
     }

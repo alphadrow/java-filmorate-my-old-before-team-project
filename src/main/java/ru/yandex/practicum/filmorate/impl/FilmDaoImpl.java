@@ -26,20 +26,19 @@ public class FilmDaoImpl implements FilmDao {
     }
 
 
-    public Set<Integer> getLikesByFilmId(int id) {
+    public List<Integer> getLikesByFilmId(int id) {
 
         String sql = "select user_id from likes where film_id = ?";
-        //TODO Вот тут (и дальше) я не понял как сразу сделать Set без "Set.copyOf(...)" :(
-        return Set.copyOf(jdbcTemplate.query(sql, (rs, rowNum) -> rs.getInt("user_id") , id));
+        return jdbcTemplate.query(sql, (rs, rowNum) -> rs.getInt("user_id") , id);
     }
     @Override
-    public Set<Film> getFilms() {
+    public Set<Film> get() {
         return new HashSet<>(jdbcTemplate.query("select * from films ORDER BY RATE DESC LIMIT(10)",
                 new FilmMapper()));
     }
 
     @Override
-    public Set<Film> getPopularFilms(Integer size) {
+    public Set<Film> getPopular(Integer size) {
         Set<Film> result = new HashSet<Film>(jdbcTemplate.query("select * from films ORDER BY RATE DESC LIMIT(?)",
                 new FilmMapper(), size));
         for (Film film : result) {
@@ -60,7 +59,7 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public Film getFilmById(int id) throws FilmNotFoundException {
+    public Film getById(int id) throws FilmNotFoundException {
         Film result = jdbcTemplate.query("select * from films where ID = ?",
                 new FilmMapper(), id).stream().findAny().orElseThrow(() ->
                 new FilmNotFoundException("Фильма с id "+ id + " нет в базе"));
@@ -69,7 +68,7 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public Film createFilm(Film film) {
+    public Film create(Film film) {
 
 
         jdbcTemplate.update("INSERT INTO FILMS (NAME, RELEASE_DATE, DESCRIPTION, DURATION, RATE, MPA)" +
@@ -95,7 +94,7 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public Film updateFilm(Film updatedFilm) throws FilmNotFoundException {
+    public Film update(Film updatedFilm) throws FilmNotFoundException {
         Film result = new Film();
         log.debug("updateFilm case: updatedFilm.toString() {}", updatedFilm.toString());
         jdbcTemplate.update("UPDATE FILMS SET " +
@@ -127,7 +126,7 @@ public class FilmDaoImpl implements FilmDao {
                 }
             }
         }
-        result = getFilmById(updatedFilm.getId());
+        result = getById(updatedFilm.getId());
         if (updatedFilm.getGenres() != null) {
             if (updatedFilm.getGenres().isEmpty()) {
                 result.setGenres(updatedFilm.getGenres());
@@ -139,7 +138,7 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public void dislike(Integer filmId, Integer userId) throws FilmNotFoundException, UserNotFoundException {
-        if (checkForFilmExist(filmId)){
+        if (isEmpty(filmId)){
             throw new FilmNotFoundException("Фильма с id " + filmId + "нет в базе");
         }
         if (checkForUserExist(userId)) {
@@ -150,7 +149,7 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public boolean checkForFilmExist(int id) {
+    public boolean isEmpty(int id) {
         return jdbcTemplate.query("select * from films where ID = ?",
                 new FilmMapper(), id).stream().findAny().isEmpty();
     }
@@ -202,7 +201,7 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public void like(Integer filmId, Integer userId) throws FilmNotFoundException, UserNotFoundException {
-        if (checkForFilmExist(filmId)){
+        if (isEmpty(filmId)){
             throw new FilmNotFoundException("Фильма с id " + filmId + "нет в базе");
         }
         if (checkForUserExist(userId)) {

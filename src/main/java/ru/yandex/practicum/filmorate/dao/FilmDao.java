@@ -9,28 +9,25 @@ import ru.yandex.practicum.filmorate.model.Genres;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public interface FilmDao {
 
-    Set<Film> getFilms();
+    Set<Film> get();
 
-    Set<Film> getPopularFilms(Integer size);
+    Set<Film> getPopular(Integer size);
 
-    Film getFilmById(int id) throws FilmNotFoundException;
+    Film getById(int id) throws FilmNotFoundException;
 
-    Film createFilm(Film film);
+    Film create(Film film);
 
-    Film updateFilm(Film updatedFilm) throws FilmNotFoundException;
+    Film update(Film updatedFilm) throws FilmNotFoundException;
 
     void like(Integer filmId, Integer userId) throws FilmNotFoundException, UserNotFoundException;
 
-    Set<Integer> getLikesByFilmId(int id);
-
     void dislike(Integer filmId, Integer userId) throws FilmNotFoundException, UserNotFoundException;
 
-    boolean checkForFilmExist(int id);
+    boolean isEmpty(int id);
 
     List<Mpa> getAllMpa();
 

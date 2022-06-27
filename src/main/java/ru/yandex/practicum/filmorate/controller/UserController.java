@@ -78,8 +78,5 @@ public class UserController {
                 HttpStatus.NOT_FOUND
         );
     }
-
-
-
 }
 
